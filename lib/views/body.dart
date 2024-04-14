@@ -15,7 +15,6 @@ class CurrencyBody extends StatefulWidget {
 }
 
 class _CurrencyBodyState extends State<CurrencyBody> {
-
   @override
   void initState() {
     super.initState();
@@ -26,20 +25,21 @@ class _CurrencyBodyState extends State<CurrencyBody> {
   String? currency;
 
   String? firstCurrency = 'RUB';
-  String? secondCurrency= 'USD';
+  String? secondCurrency = 'USD';
 
   int firstIndex = 0;
   int secondIndex = 0;
 
-  String? firstCodeTo = '0';
-  String? secondCodeTo = '0';
+  String? firstCodeTo = '';
+  String? secondCodeTo = '';
 
-  double? firstRate;
+  double? firstRate = 0;
+  double? first = 0;
 
   double? secondRate = 0;
+  double? secondRateResult = 0;
 
   final TextEditingController _firstFromController = TextEditingController();
-
 
   Future<void> _firstSetLanguage(String currency) async {
     final prefs = await SharedPreferences.getInstance();
@@ -87,23 +87,23 @@ class _CurrencyBodyState extends State<CurrencyBody> {
           value: currency,
           // icon: const Icon(Icons.arrow_downward),
           elevation: 16,
-          style:
-          const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
           underline: Container(),
           onChanged: (String? value) {
             // This is called when the user selects an item.
             setState(() {
-              List<MapEntry<String, double>>? conversionRatesList = widget.model?.conversionRates!.entries.toList();
+              List<MapEntry<String, double>>? conversionRatesList =
+                  widget.model?.conversionRates!.entries.toList();
               firstCodeTo = conversionRatesList?[firstIndex].key.toString();
+              print("это firstCodeTo $firstCodeTo");
+
               context.read<ItemCubit>().addItem(firstCodeTo);
               currency = value!;
               _firstSetLanguage(value.toString());
               firstIndex = conversionRatesList?.indexWhere((entry) => entry.key == value) ?? 0;
-              print("это индекс $firstIndex");
             });
           },
-          items:
-          Widgets.currencyList.map<DropdownMenuItem<String>>((String? value) {
+          items: Widgets.currencyList.map<DropdownMenuItem<String>>((String? value) {
             return DropdownMenuItem<String>(
               value: value,
               child: Row(
@@ -131,26 +131,30 @@ class _CurrencyBodyState extends State<CurrencyBody> {
           value: currency,
           // icon: const Icon(Icons.arrow_downward),
           elevation: 16,
-          style:
-          const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
           onChanged: (String? value) {
             // This is called when the user selects an item.
             setState(() {
               var baseCode = widget.model?.baseCode;
-              List<MapEntry<String, double>>? conversionRatesList = widget.model?.conversionRates!.entries.toList();
+              List<MapEntry<String, double>>? conversionRatesList =
+                  widget.model?.conversionRates!.entries.toList();
 
               currency = value!;
               _secondSetLanguage(value.toString());
               secondIndex = conversionRatesList?.indexWhere((entry) => entry.key == value) ?? 0;
               print("это индекс $secondIndex");
 
-              firstRate= conversionRatesList?[firstIndex].value;
+              firstRate = conversionRatesList?[firstIndex].value ?? 0;
+              first = (firstRate! / firstRate!) ?? 0;
               print("Это firstRate ${firstRate}");
 
-              secondRate = conversionRatesList?[secondIndex].value;
-              print("Это secondRate ${secondRate}");
+              secondRate = conversionRatesList![secondIndex].value;
 
-              secondCodeTo =  conversionRatesList?[secondIndex].key.toString();
+              double firstValue = double.parse(_firstFromController.text);
+              secondRateResult = conversionRatesList[secondIndex].value * firstValue;
+              print("Это secondRate ${secondRateResult}");
+
+              secondCodeTo = conversionRatesList[secondIndex].key.toString();
             });
           },
           items: Widgets.currencyList.map<DropdownMenuItem<String>>((String? value) {
@@ -163,8 +167,7 @@ class _CurrencyBodyState extends State<CurrencyBody> {
               ),
             );
           }).toList(),
-        )
-    );
+        ));
   }
 
   firstRowWidget() {
@@ -182,53 +185,46 @@ class _CurrencyBodyState extends State<CurrencyBody> {
           ),
           Expanded(
             flex: 2,
-            child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  Expanded(
-                    flex: 7,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(8, 0, 0, 0),
-                      child: Container(
-                        width: 65,
-                        height: 40,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                            color: const Color(0xfff5f5dc),
-                            border: Border.all(),
-                            borderRadius:
-                            const BorderRadius.all(Radius.circular(10))),
-                        child: TextField(
-                          maxLines: 1,
-                          controller: _firstFromController,
-                          keyboardType: TextInputType.number,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                              color: Colors.black, fontSize: 20),
-                          textAlignVertical: TextAlignVertical.center,
-                          decoration: InputDecoration(
-                            border: const OutlineInputBorder(
-                                borderSide: BorderSide.none,
-                                borderRadius:
-                                BorderRadius.all(Radius.circular(30))),
-                            fillColor: Theme.of(context)
-                                .inputDecorationTheme
-                                .fillColor,
-                            contentPadding: EdgeInsets.zero,
-                            hintText: 'Введите сумму',
-                          ),
-                        ),
+            child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
+              Expanded(
+                flex: 7,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 0, 0, 0),
+                  child: Container(
+                    width: 65,
+                    height: 40,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                        color: const Color(0xfff5f5dc),
+                        border: Border.all(),
+                        borderRadius: const BorderRadius.all(Radius.circular(10))),
+                    child: TextField(
+                      maxLines: 1,
+                      controller: _firstFromController,
+                      keyboardType: TextInputType.number,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.black, fontSize: 20),
+                      textAlignVertical: TextAlignVertical.center,
+                      decoration: InputDecoration(
+                        border: const OutlineInputBorder(
+                            borderSide: BorderSide.none,
+                            borderRadius: BorderRadius.all(Radius.circular(30))),
+                        fillColor: Theme.of(context).inputDecorationTheme.fillColor,
+                        contentPadding: EdgeInsets.zero,
+                        hintText: 'Введите сумму',
                       ),
                     ),
                   ),
-                  const SizedBox(width: 16.0),
-                  Expanded(
-                    flex: 3,
-                    child: Padding(
-                        padding: const EdgeInsets.fromLTRB(0, 0, 8, 0),
-                        child: firstDropdownButtonWidget()),
-                  ),
-                ]),
+                ),
+              ),
+              const SizedBox(width: 16.0),
+              Expanded(
+                flex: 3,
+                child: Padding(
+                    padding: const EdgeInsets.fromLTRB(0, 0, 8, 0),
+                    child: firstDropdownButtonWidget()),
+              ),
+            ]),
           ),
         ],
       ),
@@ -250,38 +246,34 @@ class _CurrencyBodyState extends State<CurrencyBody> {
           ),
           Expanded(
             flex: 2,
-            child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  Expanded(
-                    flex: 7,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(8, 0, 0, 0),
-                      child: Container(
-                        alignment: Alignment.center,
-                        width: 65,
-                        height: 40,
-                        decoration: BoxDecoration(
-                            color: const Color(0xfff5f5dc),
-                            border: Border.all(),
-                            borderRadius:
-                            const BorderRadius.all(Radius.circular(10))),
-                        child: Text(
-                          '${secondRate?.toStringAsFixed(4) ?? 0}',
-                          style: const TextStyle(
-                              color: Colors.black, fontSize: 20),
-                        ),
-                      ),
+            child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
+              Expanded(
+                flex: 7,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 0, 0, 0),
+                  child: Container(
+                    alignment: Alignment.center,
+                    width: 65,
+                    height: 40,
+                    decoration: BoxDecoration(
+                        color: const Color(0xfff5f5dc),
+                        border: Border.all(),
+                        borderRadius: const BorderRadius.all(Radius.circular(10))),
+                    child: Text(
+                      '${secondRateResult?.toStringAsFixed(4) ?? 0}',
+                      style: const TextStyle(color: Colors.black, fontSize: 20),
                     ),
                   ),
-                  const SizedBox(width: 16.0),
-                  Expanded(
-                    flex: 3,
-                    child: Padding(
-                        padding: const EdgeInsets.fromLTRB(0, 0, 8, 0),
-                        child: secondDropdownButtonWidget()),
-                  ),
-                ]),
+                ),
+              ),
+              const SizedBox(width: 16.0),
+              Expanded(
+                flex: 3,
+                child: Padding(
+                    padding: const EdgeInsets.fromLTRB(0, 0, 8, 0),
+                    child: secondDropdownButtonWidget()),
+              ),
+            ]),
           ),
           Expanded(
             flex: 2,
@@ -289,7 +281,7 @@ class _CurrencyBodyState extends State<CurrencyBody> {
               padding: const EdgeInsets.fromLTRB(8, 5, 0, 5),
               child: (secondRate != null)
                   ? Text(
-                  '${firstRate.toString() ?? ''}${firstCodeTo.toString() ?? ''} = ${secondRate?.toStringAsFixed(4) ?? 0}${secondCodeTo.toString() ?? ''}')
+                      'Это валюта ${first ?? 0} ${firstCurrency ?? 'Нет валюты'} = это моя ${secondRate?.toStringAsFixed(4) ?? 0}${secondCurrency.toString() ?? ''}')
                   : const Text(''),
             ),
           ),
@@ -298,11 +290,8 @@ class _CurrencyBodyState extends State<CurrencyBody> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
-
-
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: Colors.white60,
@@ -320,8 +309,7 @@ class _CurrencyBodyState extends State<CurrencyBody> {
                     flex: 1,
                     child: Text(
                       'Конвертер валют',
-                      style:
-                      TextStyle(fontSize: 34, fontWeight: FontWeight.bold),
+                      style: TextStyle(fontSize: 34, fontWeight: FontWeight.bold),
                     ),
                   ),
                   Expanded(
@@ -333,8 +321,7 @@ class _CurrencyBodyState extends State<CurrencyBody> {
                           decoration: BoxDecoration(
                               color: const Color(0xffD8ECFF),
                               border: Border.all(color: Colors.transparent),
-                              borderRadius:
-                              const BorderRadius.all(Radius.circular(10))),
+                              borderRadius: const BorderRadius.all(Radius.circular(10))),
                           child: firstRowWidget()),
                     ),
                   ),
@@ -347,8 +334,7 @@ class _CurrencyBodyState extends State<CurrencyBody> {
                           decoration: BoxDecoration(
                               color: const Color(0xffF6DEFE),
                               border: Border.all(color: Colors.transparent),
-                              borderRadius:
-                              const BorderRadius.all(Radius.circular(10))),
+                              borderRadius: const BorderRadius.all(Radius.circular(10))),
                           child: secondRowWidget()),
                     ),
                   ),
@@ -359,4 +345,3 @@ class _CurrencyBodyState extends State<CurrencyBody> {
     );
   }
 }
-
